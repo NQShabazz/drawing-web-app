@@ -1,6 +1,1 @@
-Add some highlight to make it obvious which tool is being used
-Add ctrl + z / (ctrl + shift + z / ctrl + y) functionality
-Make layer container a bit shorter
-Make clear clear the first layer
-Add a confirmation prompt before each clear call
-Have image download with specified title
+All done ^_^

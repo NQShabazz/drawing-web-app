@@ -21,7 +21,7 @@ input[type=range]{width: 100%;}
 .colorInstructions p:last-child{background: #000; color: #fff;}
 #colorCanvasContainer canvas:last-child{float: right;}
 
-#layerList{height: 200px; background: #aaa; overflow-y: auto;}
+#layerList{height: 150px; background: #aaa; overflow-y: auto;}
 
 .layerElement{padding: 5px; background-color: #bbb; text-align: center;}
 .layerElement:hover{background-color: #ccc;}
@@ -44,8 +44,10 @@ input[type=range]{width: 100%;}
 
 #canvasContainer canvas{cursor: crosshair;}
 
-#backgroundCanvas {background: url('https://upload.wikimedia.org/wikipedia/commons/thumb/6/66/White_grey_checkerboard.svg/2000px-White_grey_checkerboard.svg.png'); background-size: 200px 133px; cursor: none; box-shadow: 4px 4px 8px rgba(0,0,0,0.5);}
+#backgroundCanvas {background: url('assets/alpha-bg.png'); background-size: 200px 133px; cursor: none; box-shadow: 4px 4px 8px rgba(0,0,0,0.5);}
 
 #canvasContainer canvas:not(#backgroundCanvas){position: absolute; top: 0; left: 0;}
+
+.chosen-tool{background: #0cf;}
 
 #templateLayerElement, #templateCanvas{display: none;}

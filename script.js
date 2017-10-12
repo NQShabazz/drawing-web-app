@@ -6,6 +6,7 @@ window.onload = init;
 var _backgroundContext, _currentLayerIndex, _layerArray;
 var _imageTitle = "Untitled"; //the title of the image
 var _userAction = ""; // what the user is currently doing
+var _controlDown = false;
 
 // CONSTANTS
 
@@ -13,31 +14,50 @@ var _userAction = ""; // what the user is currently doing
 // FUNCTIONS
 function init(){
     // initialize some globals
-    _backgroundContext = document.querySelector('#backgroundCanvas').getContext('2d');
-    _currentLayerIndex = 0;
-    _layerArray = new Array();
-    
-    // now do general setup
-    setupInputs();
-    
-    document.body.onmouseup = function(){_userAction = ""; _tool.end(true);} // reset user action once the mouse is released
-    
-    setupColorCanvases();
-    
-    document.querySelector("#newLayerButton").onmousedown = addLayer; // addLayer functionality
-    
-    document.querySelector("#undoButton").onmousedown = function(){_layerArray[_currentLayerIndex].subtractAction();};
-    document.querySelector("#redoButton").onmousedown = function(){_layerArray[_currentLayerIndex].restoreAction();}; // addLayer functionality
-    
-    addLayer();
-    setCurrentLayer(0);
-    
-    // and finally we run the drawing loop:
-    draw(1000/60);
+  _backgroundContext = document.querySelector('#backgroundCanvas').getContext('2d');
+  _currentLayerIndex = 0;
+  _layerArray = new Array();
+
+  // now do general setup
+  setupInputs();
+
+  document.body.onmouseup = function(){_userAction = ""; _tool.end(true);} // reset user action once the mouse is released
+
+  setupColorCanvases();
+
+  document.querySelector("#newLayerButton").onmousedown = addLayer; // addLayer functionality
+
+  document.querySelector("#undoButton").onmouseup = function(){_layerArray[_currentLayerIndex].subtractAction();};
+  document.querySelector("#redoButton").onmouseup = function(){_layerArray[_currentLayerIndex].restoreAction();}; // addLayer functionality
+
+  document.body.onkeypress = function(e){
+    if(e.ctrlKey){
+      if((e.shiftKey && e.keyCode === 26) || e.keyCode === 25)
+        _layerArray[_currentLayerIndex].restoreAction();
+      else if(e.keyCode === 26)
+        _layerArray[_currentLayerIndex].subtractAction();
+    }
+  }
+  
+  addLayer();
+  setCurrentLayer(0);
+
+  changeTool(0);
+
+  // and finally we run the drawing loop:
+  draw(1000/60);
 }
 
 function changeTool(num){
-    _tool.toolMode = num;
+  let children = document.getElementById("toolSet").children;
+  var i = 3;
+
+  while(i--)
+    children[i].classList.remove("chosen-tool");
+
+  children[num].classList.add("chosen-tool");
+
+  _tool.toolMode = num;
 }
 
 // Function Name: setupInputs()
@@ -45,10 +65,11 @@ function changeTool(num){
 // Author: Nazaire Shabazz
 // Last update: 02/08/2017
 function setupInputs(){
-    document.querySelector('#clearButton').onmousedown = clearPrompt;
-    document.querySelector('#saveButton').onmousedown = exportPrompt;
+    document.querySelector('#clearButton').onmouseup = clearPrompt;
+  
+    document.querySelector('#saveButton').addEventListener("click", function(){exportImage(this)});
     
-    document.querySelector('#imageTitle').onchange = function(){imageTitle = this.value;};
+    document.querySelector('#imageTitle').onchange = function(){_imageTitle = this.value;};
     
     document.querySelector('#thicknessRange').oninput = function(){
         _tool.thickness = this.value;
@@ -140,18 +161,19 @@ function addLayer(){
 }
 
 function removeLayer(index){
-    if(index !== 0){
-        var layerButton = document.querySelector("#layerElement" + index);
-        layerButton.parentNode.removeChild(layerButton);
+  if(_currentLayerIndex === index)
+      setCurrentLayer(0);
+  
+  var layerButton = document.querySelector("#layerElement" + index);
+  layerButton.parentNode.removeChild(layerButton);
 
-        var layerCanvas = document.querySelector("#layer" + index);
-        layerCanvas.parentNode.removeChild(layerCanvas);
+  var layerCanvas = document.querySelector("#layer" + index);
+  layerCanvas.parentNode.removeChild(layerCanvas);
 
-        _layerArray[index].visible = false;
+  _layerArray.splice(index, 1);
 
-        if(_currentLayerIndex === index)
-            setCurrentLayer(0);
-    }
+  if(index == 0)
+    addLayer();
 }
 
 function setCurrentLayer(index){
@@ -194,15 +216,10 @@ function doClear(){
     drawGrid(ctx,'lightgray', 10, 10);
 }
 
-function doExport(c){
-    // open a new window and load the image in it
-    // http://www.w3schools.com/jsref/met_win_open.asp
-    var data = c.toDataURL("image/png"); 
-    var windowName = "derp";
-    var windowOptions = "left=0,top=0,width=" + c.width + ",height=" + c.height +",toolbar=0,resizable=0";
-    var myWindow = window.open(c.toDataURL('image/png'));
-    myWindow.resizeTo(c.width,c.height); // needed so Chrome would display image
- }
+function downloadCanvas(link, canvasId, filename) {
+    link.href = document.getElementById(canvasId).toDataURL();
+    link.download = filename;
+}
 
 // Function Name: clearPrompt()
 // Asks user to confirm they want to clear the screen
@@ -211,9 +228,11 @@ function doExport(c){
 // Last update: 02/08/2017
 function clearPrompt(){
     _tool.canDraw = false;
-    
-    for(var i = 1; i < _layerArray.length; i++){
-        removeLayer(i);
+  
+    if(window.confirm("Are u sure u want to clear the canvas?")){
+      for(var i = 0; i < _layerArray.length; i++){
+          removeLayer(i);
+      }
     }
     
     _tool.canDraw = true;        
@@ -223,7 +242,7 @@ function clearPrompt(){
 // Basically it will create a new layer, drawImage() each layer onto the new one, then export the new one
 // Author: Nazaire Shabazz
 // Last update: 02/08/2017
-function exportPrompt(){
+function exportImage(elem){
     _tool.canDraw = false;
     
     addLayer();
@@ -231,7 +250,8 @@ function exportPrompt(){
     for(var i = 0; i < _layerArray.length - 1; i++)
         _layerArray[_currentLayerIndex].ctx.drawImage(_layerArray[i].ctx.canvas, 0, 0);
         
-    doExport(_layerArray[_currentLayerIndex].ctx.canvas);
+    elem.href=_layerArray[_currentLayerIndex].ctx.canvas.toDataURL();
+    elem.download = _imageTitle;
     
     removeLayer(_currentLayerIndex);
     

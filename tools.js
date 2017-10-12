@@ -27,7 +27,6 @@ var _tool = {
             var endPosition = this.mousePosition;
             var action = [this.startPosition.x, this.startPosition.y, endPosition.x, endPosition.y, this.toolMode, this.thickness, this.fillColor, this.strokeColor, this.fillTransparency, this.strokeTransparency, this.justStarted, trulyEnding];
             
-            console.log(action);
             _layerArray[_currentLayerIndex].addAction(action);
             
             this.isDrawing = false;
